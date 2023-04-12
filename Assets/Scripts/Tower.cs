@@ -2,15 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tower : MonoBehaviour
+public class Tower : Actor
 {
-    public Team team;
-    public float health;
-
     public bool isDestroyed;
 
     public Vector3 respawnPoint;
-    public Soldier[] soldierPrefabs;
+    public Soldier[] soldierPrefabs;    
 
     void Start()
     {
@@ -19,14 +16,22 @@ public class Tower : MonoBehaviour
 
     void Spawn()
     {
-        Soldier soldier = GameObject.Instantiate(soldierPrefabs[0], respawnPoint, transform.rotation);
-        //Asignar equipo y color        
+        Renderer renderer = this.GetComponent<Renderer>();
+        int r = Random.Range(0, soldierPrefabs.Length);
+        Soldier soldier = GameObject.Instantiate(soldierPrefabs[r], respawnPoint, transform.rotation);
+        soldier.SetTeam(team, renderer.material);    
     }
 
 
     void OnDrawGizmos()
     {
-        Gizmos.color = team == Team.Blue ? Color.blue : Color.red;
+        Color c = team == Team.Blue ? Color.blue : Color.red;
+        Gizmos.color = new Color(c.r, c.g, c.b, 0.5f);
         Gizmos.DrawSphere(respawnPoint, 1f);
+    }
+
+    public override void Die()
+    {
+        throw new System.NotImplementedException();
     }
 }

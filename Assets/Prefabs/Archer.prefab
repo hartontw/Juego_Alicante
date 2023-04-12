@@ -128,9 +128,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56e0a2b2767880fd3bc755596511ffbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 0
-  speed: 0
-  hitDamage: 0
-  hitsPerSecond: 0
-  attackRange: 0
-  arrowCount: 0
+  team: 0
+  health: 100
+  speed: 3
+  hitDamage: 5
+  hitsPerSecond: 0.5
+  attackRange: 6
+  viewRange: 12
+  target: {fileID: 0}
+  arrowCount: 5000
