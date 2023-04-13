@@ -16,5 +16,9 @@ C#
 
 public class Warrior : Soldier
 {
-
+    protected override void Attack(Actor target)
+    {
+        base.Attack(target);
+        target.ReceiveDamage(hitDamage);
+    }
 }

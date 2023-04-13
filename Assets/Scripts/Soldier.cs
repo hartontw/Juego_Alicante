@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public abstract class Soldier : Actor
 {
     public float speed;
@@ -10,12 +11,17 @@ public abstract class Soldier : Actor
     public float attackRange;
     public float viewRange;
     private Actor target;
+    private float lastAttackTime = 0f;
 
-    private Rigidbody body;
+    public Rigidbody Body { get; private set; }
 
-    void Awake()
+    public float AttackFrequency { get => 1f / hitsPerSecond; }
+    public float LastAttackElapsedTime { get => Time.time - lastAttackTime; }
+
+    protected override void Awake()
     {
-        body = GetComponent<Rigidbody>();
+        base.Awake();
+        Body = GetComponent<Rigidbody>();
     }
 
     void FixedUpdate()
@@ -25,9 +31,13 @@ public abstract class Soldier : Actor
 
     void Behaviour()
     {
+        if (!IsAlive) {
+            return;
+        }
+
         target = SearchEnemy();
         if (target == null) {
-            body.velocity = Vector3.zero;
+            Body.velocity = Vector3.zero;
             return;
         }
         
@@ -35,25 +45,28 @@ public abstract class Soldier : Actor
         if (DistanceTo(target) > attackRange) {
             Move();
         }
-        else {
-            Attack();
+        else if (CanAttack()) {
+            Attack(target);
         }
+    }
+
+    public bool CanAttack()
+    {
+        return LastAttackElapsedTime >= AttackFrequency;
     }
 
     public float DistanceTo(Actor target)
     {
-        Collider targetCollider = target.GetComponent<Collider>();
-        Vector3 targetPoint = targetCollider.ClosestPoint(transform.position);
+        Vector3 targetPoint = target.Collider.ClosestPoint(transform.position);
         
-        Collider collider = GetComponent<Collider>();
-        Vector3 point = collider.ClosestPoint(targetPoint);
+        Vector3 point = Collider.ClosestPoint(targetPoint);
 
         return Vector3.Distance(targetPoint, point);
     }
 
     Actor SearchEnemy()
     {        
-        RaycastHit[] hits = Physics.SphereCastAll(body.position, viewRange, transform.forward, Mathf.Epsilon);
+        RaycastHit[] hits = Physics.SphereCastAll(Body.position, viewRange, transform.forward, Mathf.Epsilon);
 
         Actor desiredTarget = null;
 
@@ -61,8 +74,9 @@ public abstract class Soldier : Actor
         foreach(RaycastHit hit in hits)
         {            
             Actor target = hit.collider.GetComponent<Actor>();
-            if (target != null 
+            if (target != null  
                 && target.team != team
+                && target.IsAlive
                 && DistanceTo(target) < minDistance)
             {
                 desiredTarget = target;
@@ -87,19 +101,21 @@ public abstract class Soldier : Actor
     {
         Vector3 direction = position - transform.position;
         direction.y = 0f;
-        body.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        Body.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
     void Move()
     {
-        body.velocity = transform.forward * speed;
+        Body.velocity = transform.forward * speed;
     }
 
     public override void Die()
     {
-        throw new System.NotImplementedException();
+        Collider.enabled = false;
     }
-    void Attack(){
+
+    protected virtual void Attack(Actor target) {        
+        lastAttackTime = Time.time;
     }
 
     public void SetTeam(Team team, Material material)
